@@ -2,148 +2,207 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Весёлый Прыгун</title>
+    <title>Космический Прыгун</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            background: linear-gradient(to top, #1a2a6c, #b21f1f);
-            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: radial-gradient(circle at center, #0f0c29, #302b63, #24243e);
+            font-family: 'Audiowide', cursive, sans-serif;
             height: 100vh;
+            perspective: 1000px;
         }
         canvas {
             display: block;
-            background-color: #1a2a6c;
+            background: linear-gradient(to bottom, #000428, #004e92);
             width: 300px;
             height: 100%;
             margin: 0 auto;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            box-shadow: 0 0 30px rgba(65, 120, 255, 0.6);
+            border-radius: 10px;
+            position: relative;
+            z-index: 10;
         }
         #score {
             position: fixed;
-            top: 15px;
+            top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 24px;
-            color: #FFEB3B;
-            text-shadow: 2px 2px 4px #000;
+            font-size: 26px;
+            color: #00fffc;
+            text-shadow: 0 0 10px #00fffc, 0 0 20px #0084ff;
             z-index: 100;
-            background: rgba(0,0,0,0.7);
-            padding: 8px 20px;
-            border-radius: 30px;
-            border: 2px solid #FFC107;
+            background: rgba(0, 20, 40, 0.7);
+            padding: 10px 25px;
+            border-radius: 50px;
+            border: 2px solid #00fffc;
+            letter-spacing: 1px;
         }
         #gameOver {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.85);
-            color: #FF5722;
-            padding: 30px;
-            border-radius: 15px;
+            background: rgba(0, 5, 20, 0.9);
+            color: #ff4da6;
+            padding: 40px;
+            border-radius: 20px;
             text-align: center;
             display: none;
             z-index: 100;
-            border: 3px solid #E91E63;
+            border: 3px solid #ff4da6;
+            box-shadow: 0 0 30px rgba(255, 77, 166, 0.5);
+            backdrop-filter: blur(5px);
             width: 80%;
-            max-width: 300px;
+            max-width: 350px;
         }
         button {
-            background: linear-gradient(to bottom, #4CAF50, #2E7D32);
+            background: linear-gradient(45deg, #ff4da6, #ff1a75);
             border: none;
             color: white;
-            padding: 12px 25px;
+            padding: 15px 30px;
             font-size: 18px;
-            margin: 15px auto 0;
+            margin: 20px auto 0;
             cursor: pointer;
             border-radius: 50px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            box-shadow: 0 5px 15px rgba(255, 77, 166, 0.4);
             transition: all 0.3s;
             display: block;
             font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 77, 166, 0.6);
+            background: linear-gradient(45deg, #ff1a75, #ff4da6);
         }
         h1 {
-            color: #FF9800;
+            color: #00fffc;
             margin-top: 0;
-            font-size: 28px;
-            text-shadow: 1px 1px 2px #000;
+            font-size: 32px;
+            text-shadow: 0 0 10px #00fffc;
+            margin-bottom: 20px;
         }
         #finalScore {
-            font-size: 22px;
-            color: #00BCD4;
-            margin: 15px 0;
+            font-size: 24px;
+            color: #ffcc00;
+            margin: 20px 0;
+            text-shadow: 0 0 8px #ffcc00;
         }
-        .cloud {
+        .star {
             position: absolute;
-            background: rgba(255,255,255,0.8);
+            background: white;
             border-radius: 50%;
-            z-index: -1;
+            animation: twinkle var(--duration) infinite ease-in-out;
+            z-index: 1;
+        }
+        .meteor {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px 2px white;
+            animation: meteor var(--duration) linear infinite;
+            opacity: 0;
+            z-index: 1;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+        @keyframes meteor {
+            0% { transform: translateX(0) translateY(0); opacity: 1; }
+            70% { opacity: 1; }
+            100% { transform: translateX(1000px) translateY(500px); opacity: 0; }
+        }
+        .planet {
+            position: absolute;
+            border-radius: 50%;
+            z-index: 2;
+            filter: drop-shadow(0 0 20px rgba(255,255,255,0.3));
         }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
 </head>
 <body>
     <div id="score">Очки: 0</div>
     <canvas id="gameCanvas"></canvas>
     <div id="gameOver">
-        <h1>Конец игры!</h1>
-        <p id="finalScore">Ваш результат: 0</p>
-        <button onclick="resetGame()">Играть снова</button>
+        <h1>Миссия провалена!</h1>
+        <p id="finalScore">Ваш счёт: 0</p>
+        <button onclick="resetGame()">Попробовать снова</button>
     </div>
 
-    <!-- Облака для фона -->
-    <div id="clouds"></div>
+    <div id="space"></div>
 
     <script>
-        // Создание декоративных облаков
-        function createClouds() {
-            const cloudsContainer = document.getElementById('clouds');
-            cloudsContainer.innerHTML = '';
+        function createSpace() {
+            const space = document.getElementById('space');
+            space.innerHTML = '';
             
-            for (let i = 0; i < 8; i++) {
-                const cloud = document.createElement('div');
-                cloud.className = 'cloud';
+            for (let i = 0; i < 150; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
                 
-                // Случайные параметры облаков
-                const size = Math.random() * 100 + 50;
-                const opacity = Math.random() * 0.4 + 0.3;
+                const size = Math.random() * 3;
                 const posX = Math.random() * window.innerWidth;
-                const posY = Math.random() * window.innerHeight * 0.7;
-                const animationDuration = Math.random() * 30 + 20;
+                const posY = Math.random() * window.innerHeight;
+                const duration = Math.random() * 5 + 3;
                 
-                cloud.style.width = `${size}px`;
-                cloud.style.height = `${size * 0.6}px`;
-                cloud.style.opacity = opacity;
-                cloud.style.left = `${posX}px`;
-                cloud.style.top = `${posY}px`;
-                cloud.style.animation = `float ${animationDuration}s linear infinite`;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.left = `${posX}px`;
+                star.style.top = `${posY}px`;
+                star.style.opacity = Math.random();
+                star.style.setProperty('--duration', `${duration}s`);
                 
-                // Добавляем облаку тень для объема
-                cloud.style.boxShadow = `
-                    ${size/3}px ${size/5}px ${size/10}px rgba(255,255,255,0.1),
-                    -${size/4}px ${size/6}px ${size/8}px rgba(255,255,255,0.1)
-                `;
+                if (Math.random() > 0.7) {
+                    const colors = ['#00fffc', '#ff4da6', '#ffcc00', '#a162e8'];
+                    star.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    star.style.boxShadow = `0 0 ${size*2}px ${size}px currentColor`;
+                }
                 
-                cloudsContainer.appendChild(cloud);
+                space.appendChild(star);
             }
+            
+            for (let i = 0; i < 5; i++) {
+                const meteor = document.createElement('div');
+                meteor.className = 'meteor';
+                
+                const posX = Math.random() * window.innerWidth;
+                const posY = Math.random() * window.innerHeight * 0.5;
+                const duration = Math.random() * 10 + 5;
+                const delay = Math.random() * 15;
+                
+                meteor.style.left = `${posX}px`;
+                meteor.style.top = `${posY}px`;
+                meteor.style.setProperty('--duration', `${duration}s`);
+                meteor.style.animationDelay = `${delay}s`;
+                
+                space.appendChild(meteor);
+            }
+            
+            const planets = [
+                { size: 80, color: 'radial-gradient(circle at 30% 30%, #ff4da6, #99004d)', x: 20, y: 100 },
+                { size: 50, color: 'radial-gradient(circle at 30% 30%, #00fffc, #0066ff)', x: 250, y: 300 }
+            ];
+            
+            planets.forEach(planet => {
+                const planetEl = document.createElement('div');
+                planetEl.className = 'planet';
+                
+                planetEl.style.width = `${planet.size}px`;
+                planetEl.style.height = `${planet.size}px`;
+                planetEl.style.left = `${planet.x}px`;
+                planetEl.style.top = `${planet.y}px`;
+                planetEl.style.background = planet.color;
+                
+                space.appendChild(planetEl);
+            });
         }
 
-        // Анимация для облаков
-        const style = document.createElement('style');
-        style.innerHTML = `
-            @keyframes float {
-                0% { transform: translateX(0) translateY(0); }
-                50% { transform: translateX(${window.innerWidth/4}px) translateY(20px); }
-                100% { transform: translateX(0) translateY(0); }
-            }
-        `;
-        document.head.appendChild(style);
-
-        // Остальной код игры остается без изменений
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
@@ -154,7 +213,7 @@
         canvas.height = window.innerHeight;
         window.addEventListener('resize', () => {
             canvas.height = window.innerHeight;
-            createClouds();
+            createSpace();
         });
 
         const player = {
@@ -216,29 +275,74 @@
         }
 
         function drawPlayer() {
-            ctx.fillStyle = '#FF5722';
+            ctx.save();
+            ctx.shadowColor = '#00fffc';
+            ctx.shadowBlur = 15;
+            ctx.shadowOffsetY = 0;
+            
+            ctx.fillStyle = '#ffffff';
             ctx.beginPath();
             ctx.roundRect(player.x, player.y - scrollOffset, player.width, player.height, 5);
             ctx.fill();
             
-            ctx.fillStyle = 'white';
-            ctx.fillRect(player.x + 5, player.y - scrollOffset + 5, 8, 8);
-            ctx.fillRect(player.x + 17, player.y - scrollOffset + 5, 8, 8);
+            ctx.fillStyle = 'rgba(0, 255, 252, 0.3)';
+            ctx.beginPath();
+            ctx.arc(player.x + player.width/2, player.y - scrollOffset + 10, 12, 0, Math.PI * 2);
+            ctx.fill();
             
-            ctx.fillStyle = 'black';
-            ctx.fillRect(player.x + 7, player.y - scrollOffset + 7, 4, 4);
-            ctx.fillRect(player.x + 19, player.y - scrollOffset + 7, 4, 4);
+            ctx.fillStyle = '#003366';
+            ctx.beginPath();
+            ctx.arc(player.x + player.width/2 - 5, player.y - scrollOffset + 10, 4, 0, Math.PI * 2);
+            ctx.arc(player.x + player.width/2 + 5, player.y - scrollOffset + 10, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#ff4da6';
+            ctx.beginPath();
+            ctx.roundRect(player.x + 5, player.y - scrollOffset + player.height - 5, player.width - 10, 5, 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#ffcc00';
+            ctx.beginPath();
+            ctx.moveTo(player.x + 10, player.y - scrollOffset + player.height);
+            ctx.lineTo(player.x + player.width/2, player.y - scrollOffset + player.height + 8);
+            ctx.lineTo(player.x + player.width - 10, player.y - scrollOffset + player.height);
+            ctx.fill();
+            
+            ctx.restore();
         }
 
         function drawPlatforms() {
-            ctx.fillStyle = '#4CAF50';
             platforms.forEach(platform => {
                 if (platform.isReal) {
                     const platformY = platform.y - scrollOffset;
                     if (platformY > -platformHeight && platformY < canvas.height) {
+                        ctx.save();
+                        
+                        const gradient = ctx.createLinearGradient(platform.x, platformY, platform.x, platformY + platform.height);
+                        gradient.addColorStop(0, '#00fffc');
+                        gradient.addColorStop(0.5, '#0084ff');
+                        gradient.addColorStop(1, '#0044ff');
+                        
+                        ctx.fillStyle = gradient;
+                        ctx.shadowColor = '#00fffc';
+                        ctx.shadowBlur = 10;
                         ctx.beginPath();
-                        ctx.roundRect(platform.x, platformY, platform.width, platform.height, 3);
+                        ctx.roundRect(platform.x, platformY, platform.width, platform.height, 5);
                         ctx.fill();
+                        
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(platform.x + 5, platformY + platform.height/2);
+                        ctx.lineTo(platform.x + platform.width - 5, platformY + platform.height/2);
+                        ctx.stroke();
+                        
+                        ctx.beginPath();
+                        ctx.arc(platform.x + platform.width/2, platformY + platform.height/2, 3, 0, Math.PI * 2);
+                        ctx.fillStyle = 'white';
+                        ctx.fill();
+                        
+                        ctx.restore();
                     }
                 }
             });
@@ -319,7 +423,7 @@
 
         function gameOver() {
             gameRunning = false;
-            finalScoreElement.textContent = `Ваш результат: ${score}`;
+            finalScoreElement.textContent = `Ваш счёт: ${score}`;
             gameOverElement.style.display = 'block';
         }
 
@@ -346,9 +450,7 @@
             
             requestAnimationFrame(gameLoop);
         }
-
-        // Инициализация
-        createClouds();
+        createSpace();
         createPlatforms();
         gameLoop();
     </script>
