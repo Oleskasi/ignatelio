@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Весёлый Прыгун</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: linear-gradient(to top, #1a2a6c, #b21f1f);
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+            background-color: #1a2a6c;
+            width: 300px;
+            height: 100%;
+            margin: 0 auto;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        #score {
+            position: fixed;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            color: #FFEB3B;
+            text-shadow: 2px 2px 4px #000;
+            z-index: 100;
+            background: rgba(0,0,0,0.7);
+            padding: 8px 20px;
+            border-radius: 30px;
+            border: 2px solid #FFC107;
+        }
+        #gameOver {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.85);
+            color: #FF5722;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            display: none;
+            z-index: 100;
+            border: 3px solid #E91E63;
+            width: 80%;
+            max-width: 300px;
+        }
+        button {
+            background: linear-gradient(to bottom, #4CAF50, #2E7D32);
+            border: none;
+            color: white;
+            padding: 12px 25px;
+            font-size: 18px;
+            margin: 15px auto 0;
+            cursor: pointer;
+            border-radius: 50px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+            display: block;
+            font-weight: bold;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+        }
+        h1 {
+            color: #FF9800;
+            margin-top: 0;
+            font-size: 28px;
+            text-shadow: 1px 1px 2px #000;
+        }
+        #finalScore {
+            font-size: 22px;
+            color: #00BCD4;
+            margin: 15px 0;
+        }
+        .cloud {
+            position: absolute;
+            background: rgba(255,255,255,0.8);
+            border-radius: 50%;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">Очки: 0</div>
+    <canvas id="gameCanvas"></canvas>
+    <div id="gameOver">
+        <h1>Конец игры!</h1>
+        <p id="finalScore">Ваш результат: 0</p>
+        <button onclick="resetGame()">Играть снова</button>
+    </div>
+
+    <!-- Облака для фона -->
+    <div id="clouds"></div>
+
+    <script>
+        // Создание декоративных облаков
+        function createClouds() {
+            const cloudsContainer = document.getElementById('clouds');
+            cloudsContainer.innerHTML = '';
+            
+            for (let i = 0; i < 8; i++) {
+                const cloud = document.createElement('div');
+                cloud.className = 'cloud';
+                
+                // Случайные параметры облаков
+                const size = Math.random() * 100 + 50;
+                const opacity = Math.random() * 0.4 + 0.3;
+                const posX = Math.random() * window.innerWidth;
+                const posY = Math.random() * window.innerHeight * 0.7;
+                const animationDuration = Math.random() * 30 + 20;
+                
+                cloud.style.width = `${size}px`;
+                cloud.style.height = `${size * 0.6}px`;
+                cloud.style.opacity = opacity;
+                cloud.style.left = `${posX}px`;
+                cloud.style.top = `${posY}px`;
+                cloud.style.animation = `float ${animationDuration}s linear infinite`;
+                
+                // Добавляем облаку тень для объема
+                cloud.style.boxShadow = `
+                    ${size/3}px ${size/5}px ${size/10}px rgba(255,255,255,0.1),
+                    -${size/4}px ${size/6}px ${size/8}px rgba(255,255,255,0.1)
+                `;
+                
+                cloudsContainer.appendChild(cloud);
+            }
+        }
+
+        // Анимация для облаков
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes float {
+                0% { transform: translateX(0) translateY(0); }
+                50% { transform: translateX(${window.innerWidth/4}px) translateY(20px); }
+                100% { transform: translateX(0) translateY(0); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Остальной код игры остается без изменений
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const gameOverElement = document.getElementById('gameOver');
+        const finalScoreElement = document.getElementById('finalScore');
+
+        canvas.width = 300;
+        canvas.height = window.innerHeight;
+        window.addEventListener('resize', () => {
+            canvas.height = window.innerHeight;
+            createClouds();
+        });
+
+        const player = {
+            x: canvas.width / 2 - 15,
+            y: canvas.height - 50,
+            width: 30,
+            height: 30,
+            speed: 3,
+            dx: 0,
+            dy: 0,
+            gravity: 0.15,
+            jumpForce: -7,
+            isJumping: false
+        };
+
+        const platforms = [];
+        const platformCount = 10;
+        const platformWidth = 70;
+        const platformHeight = 12;
+        const minPlatformGap = 80;
+        const maxPlatformGap = 150;
+
+        let score = 0;
+        let gameRunning = true;
+        let scrollOffset = 0;
+        let keys = {};
+        let lastPlatformY = 0;
+
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        function createPlatforms() {
+            platforms.length = 0;
+            lastPlatformY = canvas.height - 20;
+            
+            platforms.push({
+                x: canvas.width / 2 - platformWidth / 2,
+                y: lastPlatformY,
+                width: platformWidth,
+                height: platformHeight,
+                isReal: true
+            });
+
+            for (let i = 1; i < platformCount; i++) {
+                lastPlatformY -= Math.random() * (maxPlatformGap - minPlatformGap) + minPlatformGap;
+                platforms.push({
+                    x: Math.random() * (canvas.width - platformWidth),
+                    y: lastPlatformY,
+                    width: platformWidth,
+                    height: platformHeight,
+                    isReal: true
+                });
+            }
+        }
+
+        function drawPlayer() {
+            ctx.fillStyle = '#FF5722';
+            ctx.beginPath();
+            ctx.roundRect(player.x, player.y - scrollOffset, player.width, player.height, 5);
+            ctx.fill();
+            
+            ctx.fillStyle = 'white';
+            ctx.fillRect(player.x + 5, player.y - scrollOffset + 5, 8, 8);
+            ctx.fillRect(player.x + 17, player.y - scrollOffset + 5, 8, 8);
+            
+            ctx.fillStyle = 'black';
+            ctx.fillRect(player.x + 7, player.y - scrollOffset + 7, 4, 4);
+            ctx.fillRect(player.x + 19, player.y - scrollOffset + 7, 4, 4);
+        }
+
+        function drawPlatforms() {
+            ctx.fillStyle = '#4CAF50';
+            platforms.forEach(platform => {
+                if (platform.isReal) {
+                    const platformY = platform.y - scrollOffset;
+                    if (platformY > -platformHeight && platformY < canvas.height) {
+                        ctx.beginPath();
+                        ctx.roundRect(platform.x, platformY, platform.width, platform.height, 3);
+                        ctx.fill();
+                    }
+                }
+            });
+        }
+
+        function updatePlayer() {
+            if (keys['ArrowLeft'] || keys['a']) {
+                player.dx = -player.speed;
+            } else if (keys['ArrowRight'] || keys['d']) {
+                player.dx = player.speed;
+            } else {
+                player.dx = 0;
+            }
+
+            player.dy += player.gravity;
+            player.x += player.dx;
+            player.y += player.dy;
+
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+            let onPlatform = false;
+            platforms.forEach(platform => {
+                if (!platform.isReal) return;
+
+                const platformTop = platform.y;
+                const platformBottom = platformTop + platform.height;
+                const playerBottom = player.y + player.height;
+                const playerRight = player.x + player.width;
+
+                if (
+                    playerBottom >= platformTop &&
+                    player.y <= platformBottom &&
+                    playerBottom + player.dy >= platformTop &&
+                    playerRight > platform.x &&
+                    player.x < platform.x + platform.width
+                ) {
+                    if (player.dy > 0) {
+                        player.y = platformTop - player.height;
+                        player.dy = player.jumpForce;
+                        onPlatform = true;
+                        
+                        if (platform.y < lastPlatformY) {
+                            score += 10;
+                            scoreElement.textContent = `Очки: ${score}`;
+                            lastPlatformY = platform.y;
+                        }
+                    }
+                }
+            });
+
+            const scrollThreshold = canvas.height / 3;
+            if (player.y - scrollOffset < scrollThreshold) {
+                scrollOffset = player.y - scrollThreshold;
+                
+                if (platforms[platforms.length - 1].y > scrollOffset) {
+                    const newY = platforms[platforms.length - 1].y - (Math.random() * (maxPlatformGap - minPlatformGap) + minPlatformGap);
+                    platforms.push({
+                        x: Math.random() * (canvas.width - platformWidth),
+                        y: newY,
+                        width: platformWidth,
+                        height: platformHeight,
+                        isReal: true
+                    });
+                }
+            }
+
+            for (let i = platforms.length - 1; i >= 0; i--) {
+                if (platforms[i].y - scrollOffset > canvas.height + 50) {
+                    platforms.splice(i, 1);
+                }
+            }
+
+            if (player.y - scrollOffset > canvas.height) {
+                gameOver();
+            }
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            finalScoreElement.textContent = `Ваш результат: ${score}`;
+            gameOverElement.style.display = 'block';
+        }
+
+        function resetGame() {
+            player.x = canvas.width / 2 - 15;
+            player.y = canvas.height - 50;
+            player.dy = 0;
+            score = 0;
+            scrollOffset = 0;
+            scoreElement.textContent = `Очки: ${score}`;
+            createPlatforms();
+            gameRunning = true;
+            gameOverElement.style.display = 'none';
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (gameRunning) {
+                updatePlayer();
+                drawPlatforms();
+                drawPlayer();
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Инициализация
+        createClouds();
+        createPlatforms();
+        gameLoop();
+    </script>
+</body>
+</html>
