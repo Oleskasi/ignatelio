@@ -2,24 +2,27 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Космический Прыгун</title>
     <style>
         body {
             margin: 0;
+            padding: 0;
             overflow: hidden;
             background: radial-gradient(circle at center, #0f0c29, #302b63, #24243e);
             font-family: 'Audiowide', cursive, sans-serif;
             height: 100vh;
-            perspective: 1000px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
         canvas {
             display: block;
             background: linear-gradient(to bottom, #000428, #004e92);
-            width: 300px;
+            width: 100%;
+            max-width: 400px;
             height: 100%;
             margin: 0 auto;
             box-shadow: 0 0 30px rgba(65, 120, 255, 0.6);
-            border-radius: 10px;
             position: relative;
             z-index: 10;
         }
@@ -28,15 +31,18 @@
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 26px;
+            font-size: 5vw;
+            min-font-size: 20px;
+            max-font-size: 26px;
             color: #00fffc;
             text-shadow: 0 0 10px #00fffc, 0 0 20px #0084ff;
             z-index: 100;
             background: rgba(0, 20, 40, 0.7);
-            padding: 10px 25px;
+            padding: 2vw 5vw;
             border-radius: 50px;
             border: 2px solid #00fffc;
             letter-spacing: 1px;
+            white-space: nowrap;
         }
         #gameOver {
             position: fixed;
@@ -45,7 +51,7 @@
             transform: translate(-50%, -50%);
             background: rgba(0, 5, 20, 0.9);
             color: #ff4da6;
-            padding: 40px;
+            padding: 6vw;
             border-radius: 20px;
             text-align: center;
             display: none;
@@ -60,9 +66,9 @@
             background: linear-gradient(45deg, #ff4da6, #ff1a75);
             border: none;
             color: white;
-            padding: 15px 30px;
-            font-size: 18px;
-            margin: 20px auto 0;
+            padding: 4vw 8vw;
+            font-size: 4.5vw;
+            margin: 5vw auto 0;
             cursor: pointer;
             border-radius: 50px;
             box-shadow: 0 5px 15px rgba(255, 77, 166, 0.4);
@@ -71,6 +77,8 @@
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 1px;
+            width: 100%;
+            max-width: 200px;
         }
         button:hover {
             transform: translateY(-3px);
@@ -80,14 +88,18 @@
         h1 {
             color: #00fffc;
             margin-top: 0;
-            font-size: 32px;
+            font-size: 6vw;
+            min-font-size: 24px;
+            max-font-size: 32px;
             text-shadow: 0 0 10px #00fffc;
-            margin-bottom: 20px;
+            margin-bottom: 5vw;
         }
         #finalScore {
-            font-size: 24px;
+            font-size: 5vw;
+            min-font-size: 22px;
+            max-font-size: 28px;
             color: #ffcc00;
-            margin: 20px 0;
+            margin: 5vw 0;
             text-shadow: 0 0 8px #ffcc00;
         }
         .star {
@@ -123,6 +135,58 @@
             z-index: 2;
             filter: drop-shadow(0 0 20px rgba(255,255,255,0.3));
         }
+        #controls {
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
+            max-width: 400px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10%;
+            box-sizing: border-box;
+            z-index: 50;
+            opacity: 0.8;
+        }
+        .control-btn {
+            width: 15vw;
+            height: 15vw;
+            max-width: 80px;
+            max-height: 80px;
+            min-width: 50px;
+            min-height: 50px;
+            background: rgba(0, 150, 255, 0.3);
+            border: 2px solid #00fffc;
+            border-radius: 50%;
+            color: white;
+            font-size: 8vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            touch-action: manipulation;
+            box-shadow: 0 0 15px rgba(0, 255, 252, 0.5);
+        }
+        @media (min-width: 768px) {
+            #score {
+                font-size: 26px;
+                padding: 10px 25px;
+            }
+            h1 {
+                font-size: 32px;
+            }
+            #finalScore {
+                font-size: 28px;
+            }
+            button {
+                font-size: 18px;
+                padding: 15px 30px;
+            }
+            .control-btn {
+                display: none;
+            }
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
 </head>
@@ -134,15 +198,55 @@
         <p id="finalScore">Ваш счёт: 0</p>
         <button onclick="resetGame()">Попробовать снова</button>
     </div>
-
+    <div id="controls">
+        <div class="control-btn" id="leftBtn">←</div>
+        <div class="control-btn" id="rightBtn">→</div>
+    </div>
     <div id="space"></div>
 
     <script>
+        function initTouchControls() {
+            const leftBtn = document.getElementById('leftBtn');
+            const rightBtn = document.getElementById('rightBtn');
+            
+            leftBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                keys['ArrowLeft'] = true;
+                leftBtn.style.background = 'rgba(0, 200, 255, 0.5)';
+            });
+            
+            leftBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                keys['ArrowLeft'] = false;
+                leftBtn.style.background = 'rgba(0, 150, 255, 0.3)';
+            });
+            
+            rightBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                keys['ArrowRight'] = true;
+                rightBtn.style.background = 'rgba(0, 200, 255, 0.5)';
+            });
+            
+            rightBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                keys['ArrowRight'] = false;
+                rightBtn.style.background = 'rgba(0, 150, 255, 0.3)';
+            });
+            
+            document.addEventListener('touchstart', (e) => {
+                if (gameRunning) {
+                    if (e.target !== leftBtn && e.target !== rightBtn) {
+                        player.dy = player.jumpForce;
+                    }
+                }
+            });
+        }
+
         function createSpace() {
             const space = document.getElementById('space');
             space.innerHTML = '';
             
-            for (let i = 0; i < 150; i++) {
+            for (let i = 0; i < 100; i++) {
                 const star = document.createElement('div');
                 star.className = 'star';
                 
@@ -167,7 +271,7 @@
                 space.appendChild(star);
             }
             
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < 3; i++) {
                 const meteor = document.createElement('div');
                 meteor.className = 'meteor';
                 
@@ -185,8 +289,8 @@
             }
             
             const planets = [
-                { size: 80, color: 'radial-gradient(circle at 30% 30%, #ff4da6, #99004d)', x: 20, y: 100 },
-                { size: 50, color: 'radial-gradient(circle at 30% 30%, #00fffc, #0066ff)', x: 250, y: 300 }
+                { size: 60, color: 'radial-gradient(circle at 30% 30%, #ff4da6, #99004d)', x: 20, y: 100 },
+                { size: 40, color: 'radial-gradient(circle at 30% 30%, #00fffc, #0066ff)', x: window.innerWidth - 120, y: 200 }
             ];
             
             planets.forEach(planet => {
@@ -209,12 +313,14 @@
         const gameOverElement = document.getElementById('gameOver');
         const finalScoreElement = document.getElementById('finalScore');
 
-        canvas.width = 300;
-        canvas.height = window.innerHeight;
-        window.addEventListener('resize', () => {
+        function resizeCanvas() {
+            canvas.width = Math.min(400, window.innerWidth);
             canvas.height = window.innerHeight;
             createSpace();
-        });
+        }
+
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
 
         const player = {
             x: canvas.width / 2 - 15,
@@ -249,6 +355,14 @@
         document.addEventListener('keyup', (e) => {
             keys[e.key] = false;
         });
+
+        document.addEventListener('click', () => {
+            if (gameRunning) {
+                player.dy = player.jumpForce;
+            }
+        });
+
+        initTouchControls();
 
         function createPlatforms() {
             platforms.length = 0;
@@ -326,6 +440,7 @@
                         ctx.fillStyle = gradient;
                         ctx.shadowColor = '#00fffc';
                         ctx.shadowBlur = 10;
+                        
                         ctx.beginPath();
                         ctx.roundRect(platform.x, platformY, platform.width, platform.height, 5);
                         ctx.fill();
@@ -450,6 +565,7 @@
             
             requestAnimationFrame(gameLoop);
         }
+
         createSpace();
         createPlatforms();
         gameLoop();
